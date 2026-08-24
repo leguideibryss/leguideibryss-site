@@ -41,57 +41,47 @@ function PillarCard({ icon: Icon, tag, title, desc, points, cta, featured }) {
     <div
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      className={`relative overflow-hidden rounded-2xl border transition-shadow duration-300 ${
-        featured
+      className={"relative overflow-hidden rounded-2xl border transition-shadow duration-300 " + (featured
           ? "bg-[#1F4E79] border-[#1F4E79] text-white shadow-xl md:col-span-2"
-          : "bg-white border-slate-200 text-slate-900 hover:shadow-lg"
-      }`}
+          : "bg-white border-slate-200 text-slate-900 hover:shadow-lg")}
     >
       <div className="p-8">
         <div className="flex items-center justify-between mb-6">
           <div
-            className={`inline-flex items-center justify-center w-12 h-12 rounded-full ${
-              featured ? "bg-white/15" : "bg-[#EDF2F8]"
-            }`}
+            className={"inline-flex items-center justify-center w-12 h-12 rounded-full " + (featured ? "bg-white/15" : "bg-[#EDF2F8]")}
           >
             <Icon className={featured ? "w-6 h-6 text-white" : "w-6 h-6 text-[#1F4E79]"} strokeWidth={2} />
           </div>
           <span
-            className={`text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full ${
-              featured ? "bg-[#D9660B] text-white" : "bg-[#FBEADD] text-[#D9660B]"
-            }`}
+            className={"text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full " + (featured ? "bg-[#D9660B] text-white" : "bg-[#FBEADD] text-[#D9660B]")}
           >
             {tag}
           </span>
         </div>
-        <h3 className={text-2xl md:text-3xl font-bold mb-3 ${featured ? "text-white" : "text-[#1F4E79]"}} style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+        <h3 className={"text-2xl md:text-3xl font-bold mb-3 " + (featured ? "text-white" : "text-[#1F4E79]")} style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
           {title}
         </h3>
-        <p className={mb-5 leading-relaxed ${featured ? "text-white/85" : "text-slate-600"}}>{desc}</p>
+        <p className={"mb-5 leading-relaxed " + (featured ? "text-white/85" : "text-slate-600")}>{desc}</p>
         <ul className="space-y-2 mb-6">
           {points.map((p) => (
             <li key={p} className="flex items-start gap-2 text-sm">
-              <CheckCircle2 className={w-4 h-4 mt-0.5 shrink-0 ${featured ? "text-[#FFA25B]" : "text-[#D9660B]"}} />
+              <CheckCircle2 className={"w-4 h-4 mt-0.5 shrink-0 " + (featured ? "text-[#FFA25B]" : "text-[#D9660B]")} />
               <span className={featured ? "text-white/90" : "text-slate-700"}>{p}</span>
             </li>
           ))}
         </ul>
         <a
           href="https://wa.me/2250749946357"
-          className={`inline-flex items-center gap-2 font-semibold text-sm rounded-full px-5 py-3 transition-colors ${
-            featured
+          className={"inline-flex items-center gap-2 font-semibold text-sm rounded-full px-5 py-3 transition-colors " + (featured
               ? "bg-white text-[#1F4E79] hover:bg-[#FBEADD]"
-              : "bg-[#1F4E79] text-white hover:bg-[#163b5c]"
-          }`}
+              : "bg-[#1F4E79] text-white hover:bg-[#163b5c]")}
         >
           <MessageCircle className="w-4 h-4" />
           {cta}
         </a>
       </div>
       <div
-        className={`absolute -right-4 -bottom-4 transition-all duration-500 ${
-          hover ? "opacity-100 scale-100 rotate-[-8deg]" : "opacity-0 scale-90 rotate-[-18deg]"
-        }`}
+        className={"absolute -right-4 -bottom-4 transition-all duration-500 " + (hover ? "opacity-100 scale-100 rotate-[-8deg]" : "opacity-0 scale-90 rotate-[-18deg]")}
       >
         <FileCheck2 className={featured ? "w-20 h-20 text-white/10" : "w-20 h-20 text-[#1F4E79]/5"} />
       </div>
@@ -113,15 +103,13 @@ export default function LeGuideIbrysSite() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900" style={{ fontFamily: "'Work Sans', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Work+Sans:wght@400;500;600;700&display=swap');
-        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .marquee-track { animation: marquee 28s linear infinite; }
-        @media (prefers-reduced-motion: reduce) {
-          .marquee-track { animation: none; }
-        }
-        .focus-ring:focus-visible { outline: 3px solid #D9660B; outline-offset: 2px; }
-      `}</style>
+      <style>{
+        "@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Work+Sans:wght@400;500;600;700&display=swap');" +
+        "@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }" +
+        ".marquee-track { animation: marquee 28s linear infinite; }" +
+        "@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }" +
+        ".focus-ring:focus-visible { outline: 3px solid #D9660B; outline-offset: 2px; }"
+      }</style>
 
       {/* NAV */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-100">
