@@ -1,89 +1,151 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import {
-  MapPin, ShieldCheck, CheckCircle2, Home, Egg, Plane,
-  MessageCircle, Users, ArrowRight, Phone, Menu, X, FileCheck2, Mail,
+  MapPin, ShieldCheck, CheckCircle2, FileCheck2, Users, ArrowRight,
+  Phone, Menu, X, Mail, Ruler, Wallet, Filter,
 } from "lucide-react";
 
-const WORDS = ["un terrain.", "vos œufs.", "votre voyage."];
+const ZONES = ["Toutes", "Bouaké", "Yamoussoukro", "Abidjan"];
 
-function useCycler(list, interval = 2400) {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setI((v) => (v + 1) % list.length), interval);
-    return () => clearInterval(t);
-  }, [list.length, interval]);
-  return list[i];
+const SITES = [
+  // ABIDJAN ET PERIPHERIQUE
+  { id: "adj-adjin", zone: "Abidjan", name: "Bingerville (Adjin)", loc: "Adjin.", surface: "500 m²", cash: "30 000 000 F", echelon: "NON", statut: "Approbation", arg: "Zone Est officiellement désignée du Grand Abidjan par le SDUGA (décret n°2016-138), desservie par la future ligne BRT électrique Yopougon-Bingerville et un chantier de 64,8 milliards FCFA sur le boulevard Mitterrand.", photo: "/sites/adj-adjin.jpg" },
+  { id: "adj-adoha", zone: "Abidjan", name: "Bingerville (Adoha)", loc: "Adoha.", surface: "599 m²", cash: "40 000 000 F", echelon: "NON", statut: "ACD globale", arg: "Zone Est officiellement désignée du Grand Abidjan par le SDUGA (décret n°2016-138), desservie par la future ligne BRT électrique Yopougon-Bingerville et un chantier de 64,8 milliards FCFA sur le boulevard Mitterrand.", photo: "/sites/adj-adoha.jpg" },
+  { id: "jacq-djace500", zone: "Abidjan", name: "Jacqueville Djacé 500 m²", loc: "En bordure de la route principale de Jacqueville.", surface: "500 m²", cash: "10 000 000 F", echelon: "11 000 000 F sur 6 mois, apport de 5 500 000 F", statut: "Approbation", arg: "Jacqueville est un pôle touristique national prioritaire (stratégie Sublime Côte d'Ivoire, top 5 Afrique d'ici 2030), désenclavé par le pont Philippe-Grégoire-Yacé.", photo: "/sites/jacq-djace500.jpg" },
+  { id: "jacq-djace407", zone: "Abidjan", name: "Jacqueville Djacé 407 m²", loc: "En bordure de la route principale de Jacqueville.", surface: "407 m²", cash: "21 500 000 F", echelon: "22 500 000 F sur 6 mois, apport de 11 000 000 F", statut: "Approbation", arg: "Jacqueville est un pôle touristique national prioritaire (stratégie Sublime Côte d'Ivoire, top 5 Afrique d'ici 2030), désenclavé par le pont Philippe-Grégoire-Yacé.", photo: "/sites/jacq-djace407.jpg" },
+  { id: "jacq-ahua", zone: "Abidjan", name: "Jacqueville Ahua", loc: "À 10 min du goudron et de la mer, zone habitée, prête à construire, non loin d'une école.", surface: "595 m²", cash: "20 500 000 F", echelon: "NON", statut: "ACD", arg: "Jacqueville est un pôle touristique national prioritaire (stratégie Sublime Côte d'Ivoire, top 5 Afrique d'ici 2030), désenclavé par le pont Philippe-Grégoire-Yacé.", photo: "/sites/jacq-ahua.jpg" },
+  { id: "jacq-adoumangan", zone: "Abidjan", name: "Jacqueville Adoumangan (2e extension)", loc: "À 5 min de la voie principale, carrefour Adoumangan.", surface: "500 m²", cash: "8 500 000 F", echelon: "9 000 000 F sur 6 mois, apport de 3 500 000 F", statut: "Approbation", arg: "Jacqueville est un pôle touristique national prioritaire (stratégie Sublime Côte d'Ivoire, top 5 Afrique d'ici 2030), désenclavé par le pont Philippe-Grégoire-Yacé.", photo: "/sites/jacq-adoumangan.jpg" },
+  { id: "jacq-addah", zone: "Abidjan", name: "Jacqueville (Addah)", loc: "Entre lagune, par le village de Tièmé, et mer, par le village Addah.", surface: "400 m²", cash: "4 000 000 F", echelon: "4 500 000 F sur 6 mois, apport de 1 500 000 F", statut: "Attestation villageoise", arg: "Jacqueville est un pôle touristique national prioritaire (stratégie Sublime Côte d'Ivoire, top 5 Afrique d'ici 2030), désenclavé par le pont Philippe-Grégoire-Yacé.", photo: "/sites/jacq-addah.jpg" },
+  { id: "grand-jacque", zone: "Abidjan", name: "Grand Jacque", loc: "À 5 km de Jacqueville, près de la maison du sénateur.", surface: "500 m²", cash: "4 000 000 F", echelon: "4 500 000 F sur 24 mois, apport de 1 500 000 F", statut: "Livré avec Titre Foncier", arg: "Jacqueville est un pôle touristique national prioritaire (stratégie Sublime Côte d'Ivoire, top 5 Afrique d'ici 2030), désenclavé par le pont Philippe-Grégoire-Yacé. Déjà livré avec Titre Foncier.", photo: "/sites/grand-jacque.jpg" },
+  { id: "elibou-pk75", zone: "Abidjan", name: "Elibou PK75", loc: "Autoroute du Nord, à moins d'une heure de route d'Abidjan.", surface: "500 m²", cash: "3 500 000 F", echelon: "4 000 000 F sur 6 mois, avance de 1 500 000 F", statut: "Approuvé", arg: "Directement desservi par l'autoroute du Nord, l'axe structurant Abidjan-Yamoussoukro-Bouaké vers le Burkina Faso.", photo: "/sites/elibou-pk75.jpg" },
+  { id: "elibou-pk78", zone: "Abidjan", name: "Elibou PK78", loc: "1 h de route d'Abidjan, autoroute du Nord, à 200 m du goudron.", surface: "500 m²", cash: "3 000 000 F", echelon: "3 500 000 F sur 6 mois, avance de 1 500 000 F", statut: "En cours d'approbation", arg: "Directement desservi par l'autoroute du Nord, l'axe structurant Abidjan-Yamoussoukro-Bouaké vers le Burkina Faso.", photo: "/sites/elibou-pk78.jpg" },
+  { id: "agboville-moutcho", zone: "Abidjan", name: "Agboville (Grand Moutcho)", loc: "À 1 h de route d'Abidjan, à 500 m du goudron.", surface: "400/500 m²", cash: "À partir de 3 500 000 F", echelon: "NON", statut: "Approuvé", arg: "Directement desservi par l'autoroute du Nord, l'axe structurant Abidjan-Yamoussoukro-Bouaké vers le Burkina Faso.", photo: "/sites/agboville-moutcho.jpg" },
+  { id: "agboville-ery", zone: "Abidjan", name: "Agboville (Ery Makouguié)", loc: "À 1 h de route d'Abidjan, à moins de 5 min du goudron.", surface: "400 m²", cash: "3 500 000 F", echelon: "4 000 000 F sur 6 mois, apport de 1 500 000 F", statut: "Approuvé", arg: "Directement desservi par l'autoroute du Nord, l'axe structurant Abidjan-Yamoussoukro-Bouaké vers le Burkina Faso.", photo: "/sites/agboville-ery.jpg" },
+  { id: "ndouci", zone: "Abidjan", name: "N'douci", loc: "À 1 h de route d'Abidjan, lots semi-viabilisés.", surface: "500 m²", cash: "4 600 000 F", echelon: "5 000 000 F sur 6 mois, avance de 2 500 000 F", statut: "Approuvé", arg: "Directement desservi par l'autoroute du Nord, l'axe structurant Abidjan-Yamoussoukro-Bouaké vers le Burkina Faso.", photo: "/sites/ndouci.jpg" },
+
+  // YAMOUSSOUKRO
+  { id: "pkoupkoussou", zone: "Yamoussoukro", name: "Pkoupkoussou Golf", loc: "Derrière l'Hôtel du Golf.", surface: "500 m²", cash: "22 000 000 F", echelon: "NON", statut: "ACD", arg: "Capitale politique du pays, structurée par le nouveau Schéma Directeur d'Urbanisme du Grand Yamoussoukro (SDUGY 2040), dévoilé en mars 2024.", photo: "/sites/pkoupkoussou.jpg" },
+  { id: "dougounou", zone: "Yamoussoukro", name: "Dougounou Kouadiokro", loc: "À 7 min du centre-ville de Yamoussoukro, sur l'axe Bouaflé.", surface: "600 m²", cash: "3 700 000 F", echelon: "4 200 000 F", statut: "Certificat foncier", arg: "Capitale politique du pays, structurée par le nouveau Schéma Directeur d'Urbanisme du Grand Yamoussoukro (SDUGY 2040), dévoilé en mars 2024.", photo: "/sites/dougounou.jpg" },
+  { id: "subiakro", zone: "Yamoussoukro", name: "Yamoussoukro (Subiakro)", loc: "À 7 min du centre-ville.", surface: "500 m²", cash: "3 700 000 F", echelon: "4 200 000 F", statut: "Titre Foncier", arg: "Capitale politique du pays, structurée par le nouveau Schéma Directeur d'Urbanisme du Grand Yamoussoukro (SDUGY 2040), dévoilé en mars 2024.", photo: "/sites/subiakro.jpg" },
+  { id: "inphb-guiglo", zone: "Yamoussoukro", name: "INPHB (Lotissement Guiglo)", loc: "Non loin de l'INPHB, à 200 m du siège de l'AGEROUTE.", surface: "500 m²", cash: "22 000 000 F", echelon: "NON", statut: "ACD", arg: "Capitale politique du pays, structurée par le nouveau Schéma Directeur d'Urbanisme du Grand Yamoussoukro (SDUGY 2040), dévoilé en mars 2024. Proche de l'INPHB, siège du pôle universitaire de la ville.", photo: "/sites/inphb-guiglo.jpg" },
+  { id: "gouromlnakro", zone: "Yamoussoukro", name: "Gouromlnakro", loc: "À 6 km de l'Hôtel Président.", surface: "500 m²", cash: "2 700 000 F", echelon: "NON", statut: "Certificat foncier", arg: "Capitale politique du pays, structurée par le nouveau Schéma Directeur d'Urbanisme du Grand Yamoussoukro (SDUGY 2040), dévoilé en mars 2024.", photo: "/sites/gouromlnakro.jpg" },
+  { id: "lolobo-ext", zone: "Yamoussoukro", name: "Lolobo Extension", loc: "À 10 km de Yamoussoukro, sur l'ancienne voie de Bouaké.", surface: "600 m²", cash: "2 700 000 F", echelon: "NON", statut: "ACD global en cours", arg: "Capitale politique du pays, structurée par le nouveau Schéma Directeur d'Urbanisme du Grand Yamoussoukro (SDUGY 2040), dévoilé en mars 2024.", photo: "/sites/lolobo-ext.jpg" },
+  { id: "mahounou", zone: "Yamoussoukro", name: "Mahounou", loc: "À 10 km, derrière l'aéroport de Yamoussoukro.", surface: "500 m²", cash: "3 700 000 F", echelon: "4 200 000 F", statut: "Attestation villageoise", arg: "Capitale politique du pays, structurée par le nouveau Schéma Directeur d'Urbanisme du Grand Yamoussoukro (SDUGY 2040), dévoilé en mars 2024.", photo: "/sites/mahounou.jpg" },
+  { id: "bazre", zone: "Yamoussoukro", name: "Bazré", loc: "Axe Yamoussoukro–Sinfra, à 500 m de la voie principale.", surface: "500 m²", cash: "2 700 000 F", echelon: "NON", statut: "Approuvé", arg: "Capitale politique du pays, structurée par le nouveau Schéma Directeur d'Urbanisme du Grand Yamoussoukro (SDUGY 2040), dévoilé en mars 2024.", photo: "/sites/bazre.jpg" },
+  { id: "menou1", zone: "Yamoussoukro", name: "Menou 1", loc: "À 16 km de Yamoussoukro, sur l'autoroute du Nord, axe Bouaké.", surface: "500 m²", cash: "2 700 000 F", echelon: "3 200 000 F sur 6 mois", statut: "Titre Foncier", arg: "Capitale politique du pays et situé directement sur l'autoroute du Nord, axe Bouaké, déjà en Titre Foncier.", photo: "/sites/menou1.jpg" },
+  { id: "ndebo", zone: "Yamoussoukro", name: "N'debo", loc: "À 17 km de Yamoussoukro.", surface: "500 m²", cash: "1 000 000 F", echelon: "NON", statut: "Certificat foncier", arg: "Capitale politique du pays, structurée par le nouveau Schéma Directeur d'Urbanisme du Grand Yamoussoukro (SDUGY 2040), dévoilé en mars 2024.", photo: "/sites/ndebo.jpg" },
+  { id: "lolobo-ndenou", zone: "Yamoussoukro", name: "Yamoussoukro (Lolobo N'denou)", loc: "À 21 min de Yamoussoukro, en bordure de l'autoroute, axe Bouaké.", surface: "500 m²", cash: "3 700 000 F", echelon: "4 200 000 F", statut: "Titre Foncier", arg: "Capitale politique du pays et situé directement sur l'autoroute du Nord, axe Bouaké, déjà en Titre Foncier.", photo: "/sites/lolobo-ndenou.jpg" },
+
+  // BOUAKE ET PERIPHERIE
+  { id: "belleville", zone: "Bouaké", name: "Belleville Ankoprikro", loc: "Extension du quartier Belleville 02, derrière Kanankro, à 5 km de la voie bitumée.", surface: "400 m²", cash: "1 200 000 F", echelon: "1 500 000 F sur 6 mois, avance de 500 000 F", statut: "Certificat foncier", arg: "Couvert par le Plan d'Urbanisme de Détail de Bouaké (2020-2022), qui structure les zones d'extension de la 2e ville et 3e pôle économique du pays, notée BBB par Bloomfield Investment Corporation.", photo: "/sites/belleville.jpg" },
+  { id: "okaville", zone: "Bouaké", name: "Okaville", loc: "Après N'dakro, donnant sur l'autoroute, 600 hectares lotis, près de la zone industrielle de Bouaké.", surface: "500 m²", cash: "3 200 000 F", echelon: "3 500 000 F sur 6 mois, avance de 1 500 000 F", statut: "Approuvé", arg: "Couvert par le Plan d'Urbanisme de Détail de Bouaké (2020-2022), qui structure les zones d'extension de la 2e ville et 3e pôle économique du pays, notée BBB par Bloomfield Investment Corporation. Adossé aux 600 hectares de la zone industrielle de Bouaké.", photo: "/sites/okaville.jpg" },
+  { id: "assaplissi", zone: "Bouaké", name: "Assaplissi Dinambo", loc: "Extension du quartier Tchelekro, site prêt à construire.", surface: "500 m²", cash: "1 800 000 F", echelon: "2 000 000 F sur 10 mois, avance de 1 000 000 F", statut: "Nouveau Lotissement", arg: "Couvert par le Plan d'Urbanisme de Détail de Bouaké (2020-2022), qui structure les zones d'extension de la 2e ville et 3e pôle économique du pays, notée BBB par Bloomfield Investment Corporation.", photo: "/sites/assaplissi.jpg" },
+  { id: "kondoubo-mirador", zone: "Bouaké", name: "Kondoubo – Cité Mirador", loc: "Après l'échangeur de Diabo, derrière la cité CIDT et une usine d'anacarde.", surface: "500 m²", cash: "1 200 000 F", echelon: "1 500 000 F sur 6 mois, avance de 700 000 F", statut: "Nouveau Lotissement", arg: "Couvert par le Plan d'Urbanisme de Détail de Bouaké (2020-2022), qui structure les zones d'extension de la 2e ville et 3e pôle économique du pays, notée BBB par Bloomfield Investment Corporation.", photo: "/sites/kondoubo-mirador.jpg" },
+  { id: "kondoubo-ext", zone: "Bouaké", name: "Kondoubo Ext", loc: "Extension de Bouaké sur la route de Diabo, à 5 km de la cité CIDT.", surface: "500 m²", cash: "1 300 000 F", echelon: "1 500 000 F sur 6 mois, avance de 700 000 F", statut: "Nouveau Lotissement", arg: "Couvert par le Plan d'Urbanisme de Détail de Bouaké (2020-2022), qui structure les zones d'extension de la 2e ville et 3e pôle économique du pays, notée BBB par Bloomfield Investment Corporation.", photo: "/sites/kondoubo-ext.jpg" },
+  { id: "allokokro", zone: "Bouaké", name: "Allokokro Ext", loc: "Derrière la cité CIDT, sur la route de Diabo.", surface: "500 m²", cash: "3 500 000 F (cash uniquement)", echelon: "3 700 000 F en échelons, frais d'enregistrement inclus", statut: "Approuvé", arg: "Couvert par le Plan d'Urbanisme de Détail de Bouaké (2020-2022), qui structure les zones d'extension de la 2e ville et 3e pôle économique du pays, notée BBB par Bloomfield Investment Corporation.", photo: "/sites/allokokro.jpg" },
+  { id: "pokoukro", zone: "Bouaké", name: "Pokoukro", loc: "Quartier Pokoukro, Bouaké.", surface: "500 m²", cash: "600 000 F", echelon: "750 000 F sur 6 mois", statut: "Nouveau Lotissement", arg: "Couvert par le Plan d'Urbanisme de Détail de Bouaké (2020-2022), qui structure les zones d'extension de la 2e ville et 3e pôle économique du pays, notée BBB par Bloomfield Investment Corporation.", photo: "/sites/pokoukro.jpg", promo: { cash: "450 000 F", echelon: "650 000 F sur 6 mois", until: "2026-09-30", lots: 30 } },
+  { id: "assieblenou", zone: "Bouaké", name: "Assieblenou", loc: "Village à 8 km de l'échangeur de Béoumi, sur l'axe Béoumi.", surface: "500 m²", cash: "1 000 000 F", echelon: "1 200 000 F sur 6 mois, avance de 500 000 F", statut: "Nouveau Lotissement", arg: "Sur l'axe Béoumi-Sakassou-Tiébissou, actuellement en cours de bitumage par l'État.", photo: "/sites/assieblenou.jpg" },
+  { id: "angouayaokro", zone: "Bouaké", name: "Angouayaokro", loc: "À 10 km de Bouaké, proche de la SODECI Loka.", surface: "500 m²", cash: "1 000 000 F", echelon: "1 200 000 F sur 6 mois", statut: "Nouveau Lotissement", arg: "Couvert par le Plan d'Urbanisme de Détail de Bouaké (2020-2022), qui structure les zones d'extension de la 2e ville et 3e pôle économique du pays, notée BBB par Bloomfield Investment Corporation.", photo: "/sites/angouayaokro.jpg" },
+  { id: "diabo", zone: "Bouaké", name: "Diabo", loc: "À 10 km de Bouaké, derrière le collège Mohayet.", surface: "500 m²", cash: "700 000 F", echelon: "900 000 F sur 6 mois, avance de 500 000 F", statut: "Approuvé", arg: "Couvert par le Plan d'Urbanisme de Détail de Bouaké (2020-2022), qui structure les zones d'extension de la 2e ville et 3e pôle économique du pays, notée BBB par Bloomfield Investment Corporation.", photo: "/sites/diabo.jpg" },
+  { id: "diabo-selakro", zone: "Bouaké", name: "Diabo Selakro", loc: "Quartier résidentiel de Diabo, en face du Trésor, à 300 m du goudron.", surface: "500 m²", cash: "1 200 000 F", echelon: "1 500 000 F sur 6 mois, avance de 500 000 F", statut: "Nouveau Lotissement", arg: "Couvert par le Plan d'Urbanisme de Détail de Bouaké (2020-2022), qui structure les zones d'extension de la 2e ville et 3e pôle économique du pays, notée BBB par Bloomfield Investment Corporation.", photo: "/sites/diabo-selakro.jpg" },
+  { id: "bessielikro", zone: "Bouaké", name: "Bessielikro 1", loc: "À 10 km de Bouaké, rond-point de l'échangeur de Katiola, corridor Nord.", surface: "500 m²", cash: "1 500 000 F", echelon: "1 800 000 F sur 10 mois, avance de 800 000 F", statut: "Nouveau Lotissement", arg: "Sur l'axe du chantier autoroutier Bouaké-Kanawolo (près de 70 km), qui prolonge la dynamique de l'autoroute du Nord arrivée à Bouaké en 2023.", photo: "/sites/bessielikro.jpg" },
+  { id: "bamoro", zone: "Bouaké", name: "Bamoro", loc: "Extension de Bouaké, corridor Nord, zone à fort potentiel industriel.", surface: "500 m²", cash: "1 500 000 F", echelon: "1 800 000 F sur 6 mois, avance de 800 000 F", statut: "Certificat foncier", arg: "Sur l'axe du chantier autoroutier Bouaké-Kanawolo (près de 70 km), qui prolonge la dynamique de l'autoroute du Nord arrivée à Bouaké en 2023.", photo: "/sites/bamoro.jpg" },
+  { id: "kimoukro", zone: "Bouaké", name: "Kimoukro", loc: "Route de Béoumi, à 1 km de la base SODECI et PFO.", surface: "500 m²", cash: "1 500 000 F", echelon: "1 800 000 F sur 6 mois, avance de 500 000 F", statut: "Certificat foncier", arg: "Sur l'axe Béoumi-Sakassou-Tiébissou, actuellement en cours de bitumage par l'État.", photo: "/sites/kimoukro.jpg" },
+  { id: "allakro", zone: "Bouaké", name: "Allakro", loc: "Site à 20 km de Bouaké, sur la route de Katiola.", surface: "600 m²", cash: "1 500 000 F", echelon: "1 800 000 F sur 6 mois, avance de 800 000 F (frais inclus)", statut: "Titre Foncier", arg: "Sur l'axe du chantier autoroutier Bouaké-Kanawolo (près de 70 km), qui prolonge la dynamique de l'autoroute du Nord arrivée à Bouaké en 2023. Déjà en Titre Foncier, le meilleur niveau de sécurité foncière.", photo: "/sites/allakro.jpg" },
+  { id: "brobo", zone: "Bouaké", name: "Brobo Ktier Royale", loc: "Quartier résidentiel de Brobo, à 20 km de Bouaké (Est).", surface: "600 m²", cash: "1 200 000 F", echelon: "1 500 000 F sur 6 mois, avance de 600 000 F", statut: "Nouveau Lotissement", arg: "Ticket d'entrée parmi les plus bas du catalogue, dans la zone d'influence du PND 2026-2030 pour la région du Gbêkê, avec 118 millions $ de financement UE pour la mobilité et le développement du Nord.", photo: "/sites/brobo.jpg" },
+  { id: "kpelebonou", zone: "Bouaké", name: "Kpelebonou", loc: "Route de Sakassou, entre Bendekouassikro et Pitiéssi. Projet de logements sociaux prévu sur le site.", surface: "500 m²", cash: "1 800 000 F", echelon: "2 000 000 F sur 6 mois, avance de 800 000 F", statut: "En cours d'approbation", arg: "Sur l'axe Béoumi-Sakassou-Tiébissou, actuellement en cours de bitumage par l'État. Un projet de logements sociaux est prévu sur le site.", photo: "/sites/kpelebonou.jpg" },
+  { id: "akabroukro", zone: "Bouaké", name: "Akabroukro", loc: "Premier village de la région de l'Iffou, à 45 km de Bouaké.", surface: "600 m²", cash: "500 000 F", echelon: "700 000 F sur 6 mois, avance de 200 000 F", statut: "Nouveau Lotissement", arg: "Ticket d'entrée parmi les plus bas du catalogue, dans la zone d'influence du PND 2026-2030 pour la région du Gbêkê, avec 118 millions $ de financement UE pour la mobilité et le développement du Nord.", photo: "/sites/akabroukro.jpg" },
+  { id: "fronan", zone: "Bouaké", name: "Fronan", loc: "À 7 km de Katiola, 64 km de Bouaké, 50 lots disponibles.", surface: "500 m²", cash: "500 000 F", echelon: "750 000 F sur 6 mois, avance de 250 000 F", statut: "Approuvé", arg: "Sur l'axe du chantier autoroutier Bouaké-Kanawolo (près de 70 km), qui prolonge la dynamique de l'autoroute du Nord arrivée à Bouaké en 2023.", photo: "/sites/fronan.jpg" },
+  { id: "agbahou", zone: "Bouaké", name: "Agbahou (Kounahiri)", loc: "À 25 km de Béoumi, 5 km de Kounahiri, 100 lots disponibles.", surface: "500 m²", cash: "800 000 F", echelon: "1 000 000 F sur 6 mois, avance de 400 000 F", statut: "Nouveau Lotissement", arg: "Ticket d'entrée parmi les plus bas du catalogue, dans la zone d'influence du PND 2026-2030 pour la région du Gbêkê, avec 118 millions $ de financement UE pour la mobilité et le développement du Nord.", photo: "/sites/agbahou.jpg" },
+];
+
+const STATUS_STYLE = {
+  "Titre Foncier": "bg-emerald-100 text-emerald-700",
+  "Livré avec Titre Foncier": "bg-emerald-100 text-emerald-700",
+  "ACD": "bg-emerald-100 text-emerald-700",
+  "ACD globale": "bg-emerald-100 text-emerald-700",
+  "ACD global en cours": "bg-amber-100 text-amber-700",
+  "Certificat foncier": "bg-sky-100 text-sky-700",
+  "Approuvé": "bg-orange-100 text-orange-700",
+  "Approbation": "bg-orange-100 text-orange-700",
+  "En cours d'approbation": "bg-amber-100 text-amber-700",
+  "Attestation villageoise": "bg-slate-200 text-slate-700",
+  "Nouveau Lotissement": "bg-slate-200 text-slate-700",
+};
+
+function statusClass(statut) {
+  return STATUS_STYLE[statut] || "bg-slate-200 text-slate-700";
 }
 
-function Stamp({ className = "" }) {
-  return (
-    <svg viewBox="0 0 200 200" className={className} aria-hidden="true">
-      <defs>
-        <path id="stampCircle" d="M 100,100 m -78,0 a 78,78 0 1,1 156,0 a 78,78 0 1,1 -156,0" />
-      </defs>
-      <circle cx="100" cy="100" r="94" fill="none" stroke="#D9660B" strokeWidth="2.5" />
-      <circle cx="100" cy="100" r="78" fill="none" stroke="#D9660B" strokeWidth="1.5" strokeDasharray="2 4" />
-      <text fill="#1F4E79" fontSize="13.5" fontWeight="700" letterSpacing="3">
-        <textPath href="#stampCircle" startOffset="2%">
-          VÉRIFIÉ AVANT SIGNATURE • LE GUIDE IBRYSS •
-        </textPath>
-      </text>
-      <g transform="translate(100,100)">
-        <path d="M -24,-2 L -8,16 L 26,-22" fill="none" stroke="#D9660B" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-      </g>
-    </svg>
-  );
+function waLink(site) {
+  const msg = "Bonjour, je suis intéressé par le site " + site.name + " (" + site.zone + "). Pouvez-vous m'en dire plus ?";
+  return "https://wa.me/2250749946357?text=" + encodeURIComponent(msg);
 }
 
-function PillarCard({ icon: Icon, tag, title, desc, points, cta, featured }) {
-  const [hover, setHover] = useState(false);
+function isPromoActive(site) {
+  if (!site.promo) return false;
+  const today = new Date();
+  const deadline = new Date(site.promo.until + "T23:59:59");
+  return today <= deadline;
+}
+
+function SiteCard({ site }) {
+  const promoActive = isPromoActive(site);
   return (
-    <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      className={"relative overflow-hidden rounded-2xl border transition-shadow duration-300 " + (featured
-          ? "bg-[#1F4E79] border-[#1F4E79] text-white shadow-xl md:col-span-2"
-          : "bg-white border-slate-200 text-slate-900 hover:shadow-lg")}
-    >
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div
-            className={"inline-flex items-center justify-center w-12 h-12 rounded-full " + (featured ? "bg-white/15" : "bg-[#EDF2F8]")}
-          >
-            <Icon className={featured ? "w-6 h-6 text-white" : "w-6 h-6 text-[#1F4E79]"} strokeWidth={2} />
-          </div>
-          <span
-            className={"text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full " + (featured ? "bg-[#D9660B] text-white" : "bg-[#FBEADD] text-[#D9660B]")}
-          >
-            {tag}
-          </span>
-        </div>
-        <h3 className={"text-2xl md:text-3xl font-bold mb-3 " + (featured ? "text-white" : "text-[#1F4E79]")} style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-          {title}
-        </h3>
-        <p className={"mb-5 leading-relaxed " + (featured ? "text-white/85" : "text-slate-600")}>{desc}</p>
-        <ul className="space-y-2 mb-6">
-          {points.map((p) => (
-            <li key={p} className="flex items-start gap-2 text-sm">
-              <CheckCircle2 className={"w-4 h-4 mt-0.5 shrink-0 " + (featured ? "text-[#FFA25B]" : "text-[#D9660B]")} />
-              <span className={featured ? "text-white/90" : "text-slate-700"}>{p}</span>
-            </li>
-          ))}
-        </ul>
-        <a
-          href="https://wa.me/2250749946357"
-          className={"inline-flex items-center gap-2 font-semibold text-sm rounded-full px-5 py-3 transition-colors " + (featured
-              ? "bg-white text-[#1F4E79] hover:bg-[#FBEADD]"
-              : "bg-[#1F4E79] text-white hover:bg-[#163b5c]")}
-        >
-          <MessageCircle className="w-4 h-4" />
-          {cta}
-        </a>
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col">
+      <div className="h-32 bg-gradient-to-br from-[#1F4E79] to-[#173d5f] flex items-center justify-center relative">
+        <MapPin className="w-8 h-8 text-white/70" />
+        <img
+          src={site.photo}
+          alt={site.name}
+          className="absolute inset-0 w-full h-full object-cover"
+          onError={(e) => { e.target.style.display = "none"; }}
+        />
+        <span className="absolute top-3 left-3 text-[10px] font-bold tracking-widest uppercase text-white/80 z-10 drop-shadow">{site.zone}</span>
+        <span className={"absolute top-3 right-3 text-[10px] font-bold px-2 py-1 rounded-full z-10 " + statusClass(site.statut)}>{site.statut}</span>
       </div>
-      <div
-        className={"absolute -right-4 -bottom-4 transition-all duration-500 " + (hover ? "opacity-100 scale-100 rotate-[-8deg]" : "opacity-0 scale-90 rotate-[-18deg]")}
-      >
-        <FileCheck2 className={featured ? "w-20 h-20 text-white/10" : "w-20 h-20 text-[#1F4E79]/5"} />
+      <div className="p-5 flex flex-col flex-1">
+        <h3 className="font-bold text-[#1F4E79] mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{site.name}</h3>
+        <p className="text-xs text-slate-500 mb-4 leading-relaxed flex-1">{site.loc}</p>
+        {promoActive && (
+          <span className="inline-flex w-fit items-center gap-1 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full mb-2 uppercase tracking-wide">
+            Vente flash · {site.promo.lots} lots · offre valable jusqu'au {site.promo.until.split("-").reverse().join("/")}
+          </span>
+        )}
+        <div className="flex items-center gap-2 text-xs text-slate-600 mb-1">
+          <Ruler className="w-3.5 h-3.5 text-[#D9660B]" /> {site.surface}
+        </div>
+        {promoActive ? (
+          <>
+            <div className="flex items-center gap-2 text-sm mb-1">
+              <Wallet className="w-3.5 h-3.5 text-[#D9660B]" />
+              <span className="line-through text-slate-400">{site.cash}</span>
+              <span className="font-bold text-red-600">{site.promo.cash}</span>
+            </div>
+            <p className="text-xs text-slate-500 mb-3">
+              Échelonné promo : {site.promo.echelon} (au lieu de {site.echelon})
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 text-sm font-bold text-[#1F4E79] mb-1">
+              <Wallet className="w-3.5 h-3.5 text-[#D9660B]" /> {site.cash}
+            </div>
+            {site.echelon !== "NON" && (
+              <p className="text-xs text-slate-500 mb-3">Échelonné : {site.echelon}</p>
+            )}
+          </>
+        )}
+        {site.arg && (
+          <p className="text-xs text-[#1F4E79] bg-[#F7FAFD] rounded-lg px-3 py-2 mb-3 leading-relaxed border border-[#1F4E79]/10">
+            <span className="font-bold text-[#D9660B]">Atout : </span>{site.arg}
+          </p>
+        )}
+        <a
+          href={waLink(site)}
+          className="mt-2 inline-flex items-center justify-center gap-2 bg-[#1F4E79] text-white text-sm font-semibold rounded-full px-4 py-2.5 hover:bg-[#163b5c] transition-colors"
+        >
+          Écrire TERRAIN <ArrowRight className="w-3.5 h-3.5" />
+        </a>
       </div>
     </div>
   );
@@ -91,14 +153,24 @@ function PillarCard({ icon: Icon, tag, title, desc, points, cta, featured }) {
 
 export default function LeGuideIbrysSite() {
   const [navOpen, setNavOpen] = useState(false);
-  const word = useCycler(WORDS);
-  const marqueeRef = useRef(null);
+  const [zone, setZone] = useState("Toutes");
+
+  const filtered = useMemo(() => {
+    if (zone === "Toutes") return SITES;
+    return SITES.filter((s) => s.zone === zone);
+  }, [zone]);
+
+  const counts = useMemo(() => {
+    const c = { Toutes: SITES.length };
+    ZONES.slice(1).forEach((z) => { c[z] = SITES.filter((s) => s.zone === z).length; });
+    return c;
+  }, []);
 
   const trustLine = [
     "Dossier vérifié avant chaque proposition",
     "Accompagnement juridique dédié",
-    "Communauté active en Côte d'Ivoire et dans la diaspora",
-    "Transparence sur chaque document",
+    "44 sites disponibles à Abidjan, Yamoussoukro et Bouaké",
+    "Enregistrement systématique au Guide Villageois",
   ];
 
   return (
@@ -106,7 +178,7 @@ export default function LeGuideIbrysSite() {
       <style>{
         "@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Work+Sans:wght@400;500;600;700&display=swap');" +
         "@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }" +
-        ".marquee-track { animation: marquee 28s linear infinite; }" +
+        ".marquee-track { animation: marquee 30s linear infinite; }" +
         "@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }" +
         ".focus-ring:focus-visible { outline: 3px solid #D9660B; outline-offset: 2px; }"
       }</style>
@@ -124,9 +196,7 @@ export default function LeGuideIbrysSite() {
           </div>
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
             <a href="#apropos" className="hover:text-[#1F4E79] focus-ring">À propos</a>
-            <a href="#terrain" className="hover:text-[#1F4E79] focus-ring">Terrain</a>
-            <a href="#alimentaire" className="hover:text-[#1F4E79] focus-ring">Ferme</a>
-            <a href="#voyage" className="hover:text-[#1F4E79] focus-ring">Voyage</a>
+            <a href="#catalogue" className="hover:text-[#1F4E79] focus-ring">Catalogue</a>
             <a href="#communaute" className="hover:text-[#1F4E79] focus-ring">Communauté</a>
             <a href="#contact" className="hover:text-[#1F4E79] focus-ring">Contact</a>
           </nav>
@@ -134,7 +204,7 @@ export default function LeGuideIbrysSite() {
             href="https://wa.me/2250749946357"
             className="hidden md:inline-flex items-center gap-2 bg-[#D9660B] text-white text-sm font-semibold rounded-full px-5 py-2.5 hover:bg-[#c05a09] transition-colors focus-ring"
           >
-            <MessageCircle className="w-4 h-4" /> 07 49 94 63 57
+            <Phone className="w-4 h-4" /> 07 49 94 63 57
           </a>
           <button
             className="md:hidden text-[#1F4E79] focus-ring"
@@ -147,14 +217,9 @@ export default function LeGuideIbrysSite() {
         {navOpen && (
           <div className="md:hidden border-t border-slate-100 px-5 py-4 flex flex-col gap-4 text-sm font-medium text-slate-700">
             <a href="#apropos" onClick={() => setNavOpen(false)}>À propos</a>
-            <a href="#terrain" onClick={() => setNavOpen(false)}>Terrain</a>
-            <a href="#alimentaire" onClick={() => setNavOpen(false)}>Ferme</a>
-            <a href="#voyage" onClick={() => setNavOpen(false)}>Voyage</a>
+            <a href="#catalogue" onClick={() => setNavOpen(false)}>Catalogue</a>
             <a href="#communaute" onClick={() => setNavOpen(false)}>Communauté</a>
             <a href="#contact" onClick={() => setNavOpen(false)}>Contact</a>
-            <a href="https://wa.me/2250749946357" className="inline-flex items-center gap-2 bg-[#D9660B] text-white rounded-full px-4 py-2.5 w-fit">
-              <MessageCircle className="w-4 h-4" /> 07 49 94 63 57
-            </a>
           </div>
         )}
       </header>
@@ -163,45 +228,37 @@ export default function LeGuideIbrysSite() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#1F4E79] via-[#1F4E79] to-[#173d5f]" />
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-[#D9660B]/20 blur-3xl" />
-        <div className="relative max-w-6xl mx-auto px-5 md:px-8 pt-16 pb-20 md:pt-24 md:pb-28 grid md:grid-cols-[1.2fr_0.8fr] gap-12 items-center">
-          <div>
-            <p className="text-[#FFB578] font-semibold tracking-widest text-xs uppercase mb-4">
-              Découvrez une nouvelle façon d'acheter
-            </p>
-            <h1 className="text-white text-4xl md:text-5xl font-bold leading-tight mb-6" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              Tout savoir avant d'acheter
-              <br />
-              <span className="text-[#FFB578]">{word}</span>
-            </h1>
-            <p className="text-white/80 text-lg mb-8 max-w-xl leading-relaxed">
-              Les conseils qui protègent avant de signer, où que ce soit et quoi que ce soit,
-              chez nous et partout ailleurs. Votre allié pour un investissement sûr et rentable,
-              en Côte d'Ivoire comme dans la diaspora.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <a
-                href="https://wa.me/2250749946357"
-                className="inline-flex items-center gap-2 bg-[#D9660B] text-white font-semibold rounded-full px-6 py-3.5 hover:bg-[#c05a09] transition-colors focus-ring"
-              >
-                <MessageCircle className="w-4.5 h-4.5" /> Écrire sur WhatsApp
-              </a>
-              <a
-                href="#terrain"
-                className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold rounded-full px-6 py-3.5 border border-white/25 hover:bg-white/20 transition-colors focus-ring"
-              >
-                Découvrir les offres <ArrowRight className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-          <div className="hidden md:flex justify-center">
-            <Stamp className="w-64 h-64 drop-shadow-2xl" />
+        <div className="relative max-w-6xl mx-auto px-5 md:px-8 pt-16 pb-20 md:pt-24 md:pb-28">
+          <p className="text-[#FFB578] font-semibold tracking-widest text-xs uppercase mb-4">
+            Découvrez une nouvelle façon d'acheter un terrain
+          </p>
+          <h1 className="text-white text-4xl md:text-5xl font-bold leading-tight mb-6 max-w-3xl" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            44 sites vérifiés, à Abidjan, Yamoussoukro et Bouaké
+          </h1>
+          <p className="text-white/80 text-lg mb-8 max-w-xl leading-relaxed">
+            Les conseils qui protègent avant de signer, et un catalogue complet de terrains
+            documentés, prêts à l'achat, où que vous soyez en Côte d'Ivoire ou dans la diaspora.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <a
+              href="https://wa.me/2250749946357"
+              className="inline-flex items-center gap-2 bg-[#D9660B] text-white font-semibold rounded-full px-6 py-3.5 hover:bg-[#c05a09] transition-colors focus-ring"
+            >
+              <Phone className="w-4.5 h-4.5" /> Écrire sur WhatsApp
+            </a>
+            <a
+              href="#catalogue"
+              className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold rounded-full px-6 py-3.5 border border-white/25 hover:bg-white/20 transition-colors focus-ring"
+            >
+              Voir les 44 sites <ArrowRight className="w-4 h-4" />
+            </a>
           </div>
         </div>
       </section>
 
       {/* TRUST MARQUEE */}
       <section className="border-y border-slate-100 bg-[#F7FAFD] py-4 overflow-hidden">
-        <div className="flex whitespace-nowrap marquee-track" ref={marqueeRef}>
+        <div className="flex whitespace-nowrap marquee-track">
           {[...trustLine, ...trustLine].map((t, idx) => (
             <span key={idx} className="flex items-center gap-2 text-sm font-medium text-[#1F4E79] mx-8">
               <ShieldCheck className="w-4 h-4 text-[#D9660B]" /> {t}
@@ -219,25 +276,27 @@ export default function LeGuideIbrysSite() {
               L'allié qui protège avant de vendre
             </h2>
             <p className="text-slate-600 leading-relaxed mb-4">
-              Le Guide IBRYSS est né sur le terrain, au sein d'IBRYSS GROUP HOLDING, un groupe
-              ivoirien qui bâtit depuis plusieurs années dans l'immobilier, l'élevage, le voyage
-              et la construction. Ce qui revenait sans cesse dans les échanges avec les clients,
-              c'était le même regret : avoir manqué une information simple avant de signer.
+              Le Guide IBRYSS est porté par la filiale immobilière d'IBRYSS GROUP HOLDING, un
+              groupe ivoirien multisectoriel. Ce qui revenait sans cesse dans les échanges avec
+              les clients, c'était le même regret : avoir manqué une information simple avant
+              de signer.
             </p>
             <p className="text-slate-600 leading-relaxed mb-4">
-              Ce guide existe pour combler cet écart. Chaque conseil publié vient du terrain,
-              vérifié avant d'être partagé, et appuyé si besoin par un accompagnement juridique
-              dédié. Pas de promesse en l'air, seulement ce qu'il faut savoir avant d'acheter.
+              Chaque site présenté ici est vérifié avant publication, avec son statut
+              documentaire réel, sans enjolivement. Tous les lots sont livrés avec
+              l'enregistrement dans les guides villageois et au ministère de la construction.
             </p>
             <p className="text-slate-600 leading-relaxed mb-8">
-              La force d'une marque, c'est sa communauté. C'est pour ça que ce n'est pas une
-              vitrine institutionnelle : c'est un espace pensé pour informer d'abord, ici en
-              Côte d'Ivoire comme dans la diaspora, et vendre en toute confiance ensuite.
+              La force d'une marque, c'est sa communauté. Ici en Côte d'Ivoire comme dans la
+              diaspora, on informe d'abord, on vend en toute confiance ensuite.
             </p>
             <div className="flex items-center gap-4 border-t border-slate-100 pt-6">
-              <div className="w-14 h-14 rounded-full bg-[#1F4E79] flex items-center justify-center text-white font-bold text-lg shrink-0" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                SD
-              </div>
+              <img
+                src="/david.jpg"
+                alt="Seny David"
+                className="w-14 h-14 rounded-full object-cover shrink-0 bg-[#1F4E79]"
+                onError={(e) => { e.target.style.display = "none"; }}
+              />
               <div>
                 <p className="font-semibold text-[#1F4E79]">Seny David</p>
                 <p className="text-sm text-slate-500">Responsable Commercial & Marketing, IBRYSS GROUP HOLDING</p>
@@ -248,7 +307,7 @@ export default function LeGuideIbrysSite() {
           <div className="space-y-4">
             {[
               { icon: ShieldCheck, title: "Sécurité", desc: "Chaque dossier est vérifié avant d'être proposé, jamais l'inverse." },
-              { icon: FileCheck2, title: "Transparence", desc: "Les documents, les prix et les délais réels, sans zone d'ombre." },
+              { icon: FileCheck2, title: "Transparence", desc: "Le statut documentaire réel de chaque site, sans exception." },
               { icon: Users, title: "Communauté", desc: "Un espace qui informe d'abord, en Côte d'Ivoire et dans la diaspora." },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-start gap-4 bg-[#F7FAFD] rounded-2xl p-5 border border-slate-100">
@@ -268,85 +327,84 @@ export default function LeGuideIbrysSite() {
         </div>
       </section>
 
-      {/* PILLARS */}
-      <section className="max-w-6xl mx-auto px-5 md:px-8 py-20 bg-[#F7FAFD]">
-        <div className="max-w-2xl mb-12">
-          <span className="text-[#D9660B] font-bold tracking-widest text-xs uppercase">Nos trois piliers</span>
+      {/* PLANS DE DEVELOPPEMENT */}
+      <section className="max-w-6xl mx-auto px-5 md:px-8 py-16">
+        <div className="max-w-2xl mb-10">
+          <span className="text-[#D9660B] font-bold tracking-widest text-xs uppercase">Pourquoi investir maintenant</span>
           <h2 className="text-3xl md:text-4xl font-bold text-[#1F4E79] mt-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            Un achat impeccable, secteur par secteur
+            Des plans de développement officiels, pas des promesses
           </h2>
+          <p className="text-slate-600 mt-3">Le PND 2026-2030 mobilise 114 838,5 milliards FCFA à l'échelle nationale. Voici sa déclinaison concrète sur nos trois zones.</p>
         </div>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div id="terrain">
-            <PillarCard
-              featured
-              icon={Home}
-              tag="Priorité du mois"
-              title="Immobilier — Terrain"
-              desc="Des lots vérifiés, documentés et accompagnés jusqu'au titre, dans les zones en développement autour de Bouaké et Abidjan."
-              points={[
-                "Reçu d'achat, contrat de vente, extrait topographique",
-                "Attestation villageoise avec enregistrement",
-                "Sites viabilisés et électrifiés",
-              ]}
-              cta="Écrire TERRAIN"
-            />
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <h3 className="font-bold text-[#1F4E79] mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Abidjan et périphérie</h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Le Schéma Directeur d'Urbanisme du Grand Abidjan (SDUGA, décret n°2016-138) fixe
+              l'occupation des sols jusqu'en 2030. La ligne 1 du métro (Alstom, mise en service
+              2029) et un BRT électrique Yopougon-Bingerville sont en chantier, avec 64,8
+              milliards FCFA investis sur le seul boulevard Mitterrand à Bingerville. Jacqueville
+              est un pôle touristique national prioritaire, désenclavé par le pont
+              Philippe-Grégoire-Yacé.
+            </p>
           </div>
-          <div id="alimentaire">
-            <PillarCard
-              icon={Egg}
-              tag="Ferme"
-              title="Alimentaire"
-              desc="Des œufs livrés directement de la ferme au syndic de votre immeuble, sans intermédiaire ni surprise sur le prix."
-              points={["Traçabilité de la ferme à la livraison", "Prix syndic sans intermédiaire"]}
-              cta="Écrire OEUF"
-            />
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <h3 className="font-bold text-[#1F4E79] mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Yamoussoukro</h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Capitale politique et administrative du pays depuis 1983, Yamoussoukro dispose
+              depuis mars 2024 d'un Schéma Directeur d'Urbanisme révisé (SDUGY), porté à
+              l'horizon 2040, qui met fin aux chevauchements fonciers issus des anciens
+              lotissements villageois. La ville est aussi le point de jonction de l'autoroute du
+              Nord, achevée jusqu'à Tiébissou fin 2022.
+            </p>
           </div>
-          <div id="voyage">
-            <PillarCard
-              icon={Plane}
-              tag="Voyage"
-              title="Billets & bourses d'études"
-              desc="Un accompagnement honnête sur les délais réels et les dossiers, billets d'avion et bourses d'études à l'étranger."
-              points={["Aucune promesse de délai garanti", "Vérification du dossier avant dépôt"]}
-              cta="Écrire VISA"
-            />
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <h3 className="font-bold text-[#1F4E79] mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Bouaké et périphérie</h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Deuxième ville et troisième pôle économique du pays, Bouaké a vu l'autoroute du
+              Nord la rejoindre en août 2023, et voit désormais se construire l'autoroute
+              Bouaké-Kanawolo (près de 70 km) vers le Burkina Faso. La ville porte sa propre
+              notation financière BBB (Bloomfield Investment Corporation, janvier 2025) et
+              bénéficie de 118 millions $ de financement européen pour sa mobilité urbaine.
+            </p>
           </div>
         </div>
+        <p className="text-xs text-slate-400 mt-6 max-w-3xl">
+          Ces arguments s'appuient sur des projets d'infrastructure et des schémas directeurs
+          officiellement publiés et vérifiables. Aucune promesse de valorisation chiffrée n'est
+          faite sur un lot précis.
+        </p>
       </section>
 
-      {/* FEATURED LISTING */}
-      <section className="bg-white py-20">
-        <div className="max-w-6xl mx-auto px-5 md:px-8 grid md:grid-cols-[1fr_1fr] gap-10 items-center">
-          <div>
-            <span className="text-[#D9660B] font-bold tracking-widest text-xs uppercase">Offre du moment</span>
-            <h2 className="text-3xl font-bold text-[#1F4E79] mt-3 mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              Terrain à vendre — Kondoubo
+      {/* CATALOGUE */}
+      <section id="catalogue" className="bg-[#F7FAFD] py-20">
+        <div className="max-w-6xl mx-auto px-5 md:px-8">
+          <div className="max-w-2xl mb-8">
+            <span className="text-[#D9660B] font-bold tracking-widest text-xs uppercase">Catalogue</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#1F4E79] mt-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              44 sites disponibles
             </h2>
-            <p className="text-slate-600 mb-6 leading-relaxed">
-              Diabo, à 5 km de Bouaké, route de Diabo, juste après l'échangeur, derrière l'usine
-              d'anacarde. Lots de 500 m², dans le corridor de développement du PND 2026-2030.
-            </p>
-            <div className="flex items-center gap-3 text-sm text-slate-500 mb-6">
-              <MapPin className="w-4 h-4 text-[#D9660B]" /> Bouaké, Kondoubo — Diabo
-            </div>
-            <a
-              href="https://wa.me/2250749946357"
-              className="inline-flex items-center gap-2 bg-[#1F4E79] text-white font-semibold rounded-full px-6 py-3.5 hover:bg-[#163b5c] transition-colors focus-ring"
-            >
-              <MessageCircle className="w-4.5 h-4.5" /> Demander les infos
-            </a>
+            <p className="text-slate-600 mt-3">Classés du plus proche au plus éloigné de chaque ville. Statut vérifié pour chaque lot.</p>
           </div>
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-8">
-            <div className="flex justify-between items-baseline pb-4 border-b border-slate-100">
-              <span className="text-sm font-semibold text-slate-500">Paiement cash</span>
-              <span className="text-2xl font-bold text-[#1F4E79]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>1 000 000 FCFA</span>
-            </div>
-            <div className="flex justify-between items-baseline py-4 border-b border-slate-100">
-              <span className="text-sm font-semibold text-slate-500">Paiement échelonné</span>
-              <span className="text-2xl font-bold text-[#D9660B]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>1 500 000 FCFA</span>
-            </div>
-            <p className="text-xs text-slate-400 pt-3">Échelonné sur 6 mois après un apport initial de 750 000 FCFA.</p>
+
+          <div className="flex flex-wrap gap-2 mb-8">
+            {ZONES.map((z) => (
+              <button
+                key={z}
+                onClick={() => setZone(z)}
+                className={"inline-flex items-center gap-1.5 text-sm font-semibold rounded-full px-4 py-2 border transition-colors " + (zone === z
+                    ? "bg-[#1F4E79] text-white border-[#1F4E79]"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-[#1F4E79]")}
+              >
+                <Filter className="w-3.5 h-3.5" /> {z} ({counts[z]})
+              </button>
+            ))}
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filtered.map((site) => (
+              <SiteCard key={site.id} site={site} />
+            ))}
           </div>
         </div>
       </section>
@@ -359,7 +417,7 @@ export default function LeGuideIbrysSite() {
         </h2>
         <p className="text-slate-600 max-w-xl mx-auto mb-8">
           En Côte d'Ivoire ou dans la diaspora, suivez Le Guide IBRYSS pour ne rien manquer des
-          prochains conseils, avant vos prochains achats.
+          nouveaux sites disponibles et des conseils avant achat.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <a href="#" className="rounded-full border border-slate-200 px-6 py-3 font-semibold text-sm text-[#1F4E79] hover:bg-[#F7FAFD] transition-colors">
@@ -384,7 +442,7 @@ export default function LeGuideIbrysSite() {
               href="https://wa.me/2250749946357"
               className="flex items-center justify-center gap-2 bg-[#D9660B] text-white font-semibold rounded-full px-6 py-4 hover:bg-[#c05a09] transition-colors focus-ring"
             >
-              <MessageCircle className="w-4.5 h-4.5" /> 07 49 94 63 57
+              <Phone className="w-4.5 h-4.5" /> 07 49 94 63 57
             </a>
             <a
               href="mailto:leguideibryss@gmail.com"
@@ -404,7 +462,7 @@ export default function LeGuideIbrysSite() {
         <div className="max-w-6xl mx-auto px-5 md:px-8 py-12 grid md:grid-cols-3 gap-8 text-sm">
           <div>
             <span className="font-bold text-white text-lg" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>LE GUIDE IBRYSS</span>
-            <p className="mt-3 text-white/60 leading-relaxed">Tout savoir pour un achat impeccable.</p>
+            <p className="mt-3 text-white/60 leading-relaxed">44 sites vérifiés, Abidjan, Yamoussoukro, Bouaké.</p>
           </div>
           <div>
             <p className="font-semibold text-white mb-3">Contact</p>
